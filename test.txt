@@ -1,0 +1,169 @@
+-- ===== CONFIG =====
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1455764986830917796/kLiCOM-Hjp7e_e0k86KXnj_RJokF2JmUDQbeIAEhKltpmClNaoLn_7tSvZ8JRwu2ET6m"
+local SEND_INTERVAL = 60 -- 1 นาที
+-- ==================
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local player = Players.LocalPlayer
+
+-- ตรวจ executor
+local request = http_request or request or syn.request
+if not request then
+	warn("Executor นี้ไม่รองรับ HTTP Request")
+	return
+end
+
+-- ข้อมูลแมพ
+local placeId = game.PlaceId
+local placeName = "Unknown"
+
+pcall(function()
+	local info = MarketplaceService:GetProductInfo(placeId)
+	placeName = info.Name
+end)
+
+-- เวลาเข้าเซิร์ฟ
+local joinTime = tick()
+
+-- แปลงเวลา
+local function formatTime(sec)
+	local m = math.floor(sec / 60)
+	local s = math.floor(sec % 60)
+	return string.format("%d นาที %d วินาที", m, s)
+end
+
+-- ส่ง webhook
+local function sendWebhook()
+	local playerCount = #Players:GetPlayers()
+	local stayTime = formatTime(tick() - joinTime)
+
+	local data = {
+		embeds = {{
+			title = "⏱️ Server Status (1 Minute)",
+			color = 5793266,
+			fields = {
+				{
+					name = "👤 Player",
+					value = player.Name.." ("..player.UserId..")",
+					inline = false
+				},
+				{
+					name = "👥 Players in Server",
+					value = tostring(playerCount),
+					inline = true
+				},
+				{
+					name = "⏱️ Time in Server",
+					value = stayTime,
+					inline = true
+				},
+				{
+					name = "🗺️ Map",
+					value = placeName,
+					inline = true
+				},
+				{
+					name = "🆔 PlaceId",
+					value = tostring(placeId),
+					inline = true
+				}
+			},
+			timestamp = DateTime.now():ToIsoDate()
+		}}
+	}
+
+	request({
+		Url = WEBHOOK_URL,
+		Method = "POST",
+		Headers = {
+			["Content-Type"] = "application/json"
+		},
+		Body = HttpService:JSONEncode(data)
+	})
+end
+
+-- เริ่มลูปส่งทุก 1 นาที
+task.spawn(function()
+	while true do
+		sendWebhook()
+		task.wait(SEND_INTERVAL)
+	end
+end)
+
+
+
+-- ===== CONFIG =====
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1455854294891761879/4lNwHZyodt-kXhb8l0_AAv5STWUb6yZPo8C9U-geD-pHzf3-lKwPMeF-knkN0IzA-YQ1"
+-- ==================
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+
+-- ตรวจ executor
+local request = http_request or request or syn.request
+if not request then
+	warn("Executor นี้ไม่รองรับ HTTP Request")
+	return
+end
+
+-- นับจำนวนตาย
+local deathCount = 0
+
+-- ส่ง webhook
+local function sendWebhook()
+	local data = {
+		embeds = {{
+			title = "💀 Player Died",
+			color = 15158332,
+			fields = {
+				{
+					name = "👤 Player",
+					value = player.Name.." ("..player.UserId..")",
+					inline = false
+				},
+				{
+					name = "☠️ Death Count",
+					value = tostring(deathCount),
+					inline = true
+				},
+				{
+					name = "🎮 Game",
+					value = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+					inline = false
+				}
+			},
+			timestamp = DateTime.now():ToIsoDate()
+		}}
+	}
+
+	request({
+		Url = WEBHOOK_URL,
+		Method = "POST",
+		Headers = {
+			["Content-Type"] = "application/json"
+		},
+		Body = HttpService:JSONEncode(data)
+	})
+end
+
+-- ตรวจจับการตาย
+local function hookCharacter(character)
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	if not humanoid then return end
+
+	humanoid.Died:Connect(function()
+		deathCount += 1
+		sendWebhook()
+	end)
+end
+
+-- ตัวละครแรก
+if player.Character then
+	hookCharacter(player.Character)
+end
+
+-- เกิดใหม่ / เปลี่ยนตัว
+player.CharacterAdded:Connect(hookCharacter)
