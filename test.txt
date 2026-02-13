@@ -5,8 +5,7 @@ local SEND_INTERVAL = 60 -- 1 นาที
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-local Marketpl
-aceService = game:GetService("MarketplaceService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
 -- ตรวจ executor
@@ -20,10 +19,17 @@ end
 local placeId = game.PlaceId
 local placeName = "Unknown"
 
-pcall(function()
-	local info = MarketplaceService:GetProductInfo(placeId)
-	placeName = info.Name
+-- ดึงชื่อจาก Marketplace ก่อน
+local success, result = pcall(function()
+	return MarketplaceService:GetProductInfo(placeId)
 end)
+
+if success and result and result.Name then
+	placeName = result.Name
+else
+	-- ถ้าไม่ได้ ใช้ชื่อจาก game.Name แทน
+	placeName = game.Name
+end
 
 -- เวลาเข้าเซิร์ฟ
 local joinTime = tick()
@@ -44,12 +50,17 @@ local function sendWebhook()
 
 	local data = {
 		embeds = {{
-			title = "⏱️ Server Status (1 Minute)",
+			title = "⏱️ Server Status",
 			color = 5793266,
 			fields = {
 				{
 					name = "👤 Player",
 					value = player.Name.." ("..player.UserId..")",
+					inline = false
+				},
+				{
+					name = "🗺️ Map Name",
+					value = placeName,
 					inline = false
 				},
 				{
@@ -60,11 +71,6 @@ local function sendWebhook()
 				{
 					name = "⏱️ Time in Server",
 					value = stayTime,
-					inline = true
-				},
-				{
-					name = "🗺️ Map",
-					value = placeName,
 					inline = true
 				},
 				{
