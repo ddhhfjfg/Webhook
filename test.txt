@@ -5,7 +5,8 @@ local SEND_INTERVAL = 60 -- 1 นาที
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-local MarketplaceService = game:GetService("MarketplaceService")
+local Marketpl
+aceService = game:GetService("MarketplaceService")
 local player = Players.LocalPlayer
 
 -- ตรวจ executor
@@ -27,11 +28,13 @@ end)
 -- เวลาเข้าเซิร์ฟ
 local joinTime = tick()
 
--- แปลงเวลา
+-- แปลงเวลา (ชั่วโมง นาที วินาที)
 local function formatTime(sec)
-	local m = math.floor(sec / 60)
+	local h = math.floor(sec / 3600)
+	local m = math.floor((sec % 3600) / 60)
 	local s = math.floor(sec % 60)
-	return string.format("%d นาที %d วินาที", m, s)
+
+	return string.format("%d ชั่วโมง %d นาที %d วินาที", h, m, s)
 end
 
 -- ส่ง webhook
